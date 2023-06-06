@@ -122,12 +122,12 @@ class Program():
                     self.error = True
                     exit()
                 elif full_msg[HEADERSIZE:][:4] == "list":
-                    songList = full_msg[HEADERSIZE:][5:].split(';;;')
+                    songList = full_msg[HEADERSIZE:][5:][:msglen-5].split(';;;')
                     self.modelSong.clear()
                     for song in songList:
                         self.modelSong.appendRow(QStandardItem(song))
                 elif full_msg[HEADERSIZE:][:4] == "user":
-                    userList = full_msg[HEADERSIZE:][5:].split(';;;')
+                    userList = full_msg[HEADERSIZE:][5:][:msglen-5].split(';;;')
                     self.modelUser.clear()
                     for user in userList:
                         self.modelUser.appendRow(QStandardItem(user))

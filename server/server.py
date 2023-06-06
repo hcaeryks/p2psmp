@@ -71,7 +71,7 @@ class Socket():
                     print(f"<< {address}")
                     break
                 elif full_msg[HEADERSIZE:][:6] == 'export':
-                    songlist = full_msg[HEADERSIZE:][7:].split(';;;')
+                    songlist = full_msg[HEADERSIZE:][7:][:msglen-7].split(';;;')
                     self.clients[self.clientIDs.get(address)][1] = songlist
                 elif full_msg[HEADERSIZE:][:4] == 'list':
                     connection.send(self.getPDU('list ' + ';;;'.join(self.getSongList())))
