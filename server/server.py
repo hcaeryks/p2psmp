@@ -27,6 +27,10 @@ class Socket():
                 if(self.clients[x][2] and self.clients[x][1] != []):
                     songList.append(self.clients[x][1][y])
         return songList
+    
+    # retorna lista de músicas de um usuário específico
+    def getUserSongList(self, user):
+        return self.clients[self.clientIDs.get(user)][1]
 
     # encapsula o payload
     def getPDU(self, payload):
@@ -39,12 +43,12 @@ class Socket():
             client, address = self.sckt.accept()
             # checa se o cliente já existe e está ativo
             for clientI in self.clients:
-                if clientI[0][1][0] == address[0] and clientI[2]:
+                if clientI[0][1] == address and clientI[2]:
                     connected = True
                     client.send(self.getPDU('close'))
                     client.close()
             if not connected:
-                self.clients.append([(client, address), [], True])
+                self.clients.append([(client, address), [], True, 0])
                 self.clientIDs[address] = self.userCount
                 self.userCount += 1
                 client.send(self.getPDU(f"Connected to the server."))
@@ -74,12 +78,18 @@ class Socket():
                     songlist = full_msg[HEADERSIZE:][7:][:msglen-7].split(';;;')
                     self.clients[self.clientIDs.get(address)][1] = songlist
                 elif full_msg[HEADERSIZE:][:4] == 'list':
-                    connection.send(self.getPDU('list ' + ';;;'.join(self.getSongList())))
+                    ip, port = full_msg[HEADERSIZE:][5:][:msglen-5].split(':')
+                    user = (ip, int(port))
+                    connection.send(self.getPDU('list ' + ';;;'.join(self.getUserSongList(user))))
+                elif full_msg[HEADERSIZE:][:4] == 'user':
                     clientList = []
                     for client in self.clients:
-                        if client[2]:
-                            clientList.append(client[0][1][0])
+                        if client[2] and client[0][1] != address:
+                            clientList.append(str(client[0][1][0])+':'+str(client[0][1][1])+':'+str(client[3]))
                     connection.send(self.getPDU('user ' + ';;;'.join(clientList)))
+                elif full_msg[HEADERSIZE:][:4] == 'port':
+                    port = full_msg[HEADERSIZE:][5:][:msglen-5]
+                    self.clients[self.clientIDs.get(address)][3] = port
                 #print(full_msg[HEADERSIZE:msglen + HEADERSIZE])
                 full_msg = full_msg[HEADERSIZE + msglen:]
                 if len(full_msg) > 10:
